@@ -1,0 +1,6 @@
+*.json
+**/Makefile
+*.cmake
+**/build
+**/CMakeCache.txt
+
