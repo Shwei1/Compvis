@@ -5,7 +5,7 @@
 int main(int argc, char* argv[]) {
     const cv::Vec3d rvec{0.1, -0.2, 0.3}, t{1.1, 2.0, 3.};
     const cv::Affine3d affineTransform{rvec, t};
-    constexpr double fx{300.}, fy{300.}, cx{320.}, cy{320.};
+    const double fx{300.}, fy{300.}, cx{320.}, cy{320.};
     const cv::Matx33d K{fx, 0., cx, 0., fy, cy, 0., 0., 1.};
 
 	cv::Mat Rt1{};
