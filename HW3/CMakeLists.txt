@@ -22,6 +22,11 @@ add_executable(t03
 	hw3utils.cpp
 )
 
+add_executable(t04
+	t04.cpp
+	hw3utils.cpp
+)
+
 set(MY_EXECUTABLES
 	t01
 	t02

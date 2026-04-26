@@ -15,14 +15,15 @@ namespace {
 		}
 	};
 
-
 	constexpr inline double linearError(double x, double y, double k, double b) {
 		return std::abs(y-k*x-b);
 	}
+
+	inline std::size_t calculateNRANSAC(double w, double p=.99, double n=6.);
 }
 
 
-std::pair<double, double> hw3::minimizeMSE(const std::vector<double>& X, const std::vector<double>& Y) {
+std::pair<double, double> hw3::minimizeLinear(const std::vector<double>& X, const std::vector<double>& Y) {
 	const auto n{X.size()};
 
 	const double sumXY{std::ranges::fold_left(
@@ -46,6 +47,68 @@ std::pair<double, double> hw3::minimizeMSE(const std::vector<double>& X, const s
 
 	return {k, b};
 }
+
+#ifdef USE_OPENCV
+std::tuple<double, double, double> minimizeQuadratic(const std::vector<double>& X, const std::vector<double>& Y) {
+	const auto n{X.size()};
+	cv::Mat A(n, 3, CV_64F);
+	cv::Mat y(n, 1, CV_64F);
+	for (auto i{0uz}; i < n; i++) {
+		auto* rowI{A.ptr<double>(i)};
+		auto* entryY{y.ptr<double>(i)};
+
+		rowI[0] = X[i] * X[i];
+		rowI[1] = X[i];
+		rowI[2] = 1.;
+
+		entryY[0] = Y[i];
+	}
+	cv::Mat b{};
+	cv::solve(A, y, b, cv::DECOMP_SVD);
+
+	return {b.at<double>(0), b.at<double>(1), b.at<double>(2)};
+}
+#endif
+
+
+std::pair<double, double> hw3::minimizeExponential(const std::vector<double>& X, const std::vector<double>& Y) {
+	std::vector<double> lnY{Y | std::views::transform([](double v){return std::log(v);}) 
+							  | std::ranges::to<decltype(lnY)>()};
+	auto&& [lnA, b]{minimizeLinear(X, Y)};
+	return {std::exp(lnA), b};
+}
+
+
+hw3::FitResult estimateBestModelRANSAC(const std::vector<std::pair<double, double>>& points) {
+	static std::random_device rd{};
+	static std::mt19937 gen{rd()};
+
+	const auto pointCount{points.size()};
+
+	double w{0.5};
+	auto N{calculateNRANSAC(w)};
+
+	hw3::FitResult bestModel{std::monostate{}};
+	double bestRatio{};
+
+	auto i{0uz};
+	while (i < N) {
+		std::vector<std::pair<double, double>> sample{};
+
+		decltype(i) inlierCount{};
+
+		std::sample(points.begin(),
+					points.end(),
+					std::back_inserter(sample),
+					3, gen);
+
+
+	}
+
+
+
+}
+
 
 std::pair<double, double> hw3::linearEstimateRANSAC(const std::vector<std::pair<double, double>>& points,
 		double tau, double p, std::size_t k) {
@@ -77,7 +140,7 @@ std::pair<double, double> hw3::linearEstimateRANSAC(const std::vector<std::pair<
 		// std::println("X = {}", X);
 		// std::println("Y = {}", Y);
 
-		auto&& [currK, currB]{minimizeMSE(X, Y)};
+		auto&& [currK, currB]{minimizeLinear(X, Y)};
 
 		// std::println("{}, {}", currK, currB);
 
@@ -103,7 +166,7 @@ std::pair<double, double> hw3::linearEstimateRANSAC(const std::vector<std::pair<
 			inlierY.push_back(y);
 		}
 	}
-	auto&& [refinedK, refinedB]{minimizeMSE(inlierX, inlierY)};
+	auto&& [refinedK, refinedB]{minimizeLinear(inlierX, inlierY)};
 	return {refinedK, refinedB};
 }
 
@@ -121,14 +184,16 @@ std::vector<cv::Point2d> hw3::projectPoints(const std::vector<cv::Point3d>& poin
 
 	return res;
 }
+#endif
 
 namespace {
+#ifdef USE_OPENCV
 
 
 	cv::Point2d projectPoint(const cv::Point3d& pt, const cv::Matx34d& P) {
 		cv::Vec4d X{pt.x, pt.y, pt.z, 1.};
 		cv::Vec3d h{P*X};
-		return { h[0]/h[2], h[1]/h[2] };
+		return {h[0]/h[2], h[1]/h[2]};
 	}
 
 
@@ -154,8 +219,8 @@ namespace {
 			double u{correspondences[i].imagePoint.x};
 			double v{correspondences[i].imagePoint.y};
 			
-			double* row0 = A.ptr<double>(2*i);
-			double* row1 = A.ptr<double>(2*i+1);
+			double* row0{A.ptr<double>(2*i)};
+			double* row1{A.ptr<double>(2*i+1)};
 			
 			row0[0]=X;  row0[1]=Y;  row0[2]=Z;  row0[3]=1.;
 			row0[4]=0.; row0[5]=0.; row0[6]=0.; row0[7]=0.;
@@ -202,14 +267,17 @@ namespace {
 		return {RProj, t};
 	}
 
+#endif
 
-	inline std::size_t calculateNRANSAC(double w, double p=.99, double n=6.) {
+
+	inline std::size_t calculateNRANSAC(double w, double p, double n) {
 		w = std::clamp(w, 1e-9, 1.-1e-9);
 		return static_cast<std::size_t>(std::log(1-p)/std::log(1-std::pow(w, n)));
 	}
 	
 }
 
+#ifdef USE_OPENCV
 
 std::pair<cv::Matx33d, cv::Vec3d> hw3::estimateTransformRANSAC(const std::vector<hw3::Correspondence>& correspondences, const cv::Matx33d& K, double tau, double p) {
 
@@ -235,6 +303,7 @@ std::pair<cv::Matx33d, cv::Vec3d> hw3::estimateTransformRANSAC(const std::vector
 					correspondences.end(),
 					std::back_inserter(sample),
 					6, gen);
+
 #ifdef _DEBUG
 		std::println("Sample size is {}", sample.size() );
 #endif
@@ -281,7 +350,6 @@ void hw3::testReprojection(const cv::Point3d& pt3d, const cv::Point2d& pt2d, con
 }
 
 #endif
-
 
 
 
