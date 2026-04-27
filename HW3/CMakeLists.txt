@@ -31,13 +31,13 @@ set(MY_EXECUTABLES
 	t01
 	t02
 	t03
+	t04
 )
 
 
 foreach(target ${MY_EXECUTABLES})
 	target_link_libraries(${target} PRIVATE Ceres::ceres)
+	target_include_directories(${target} PRIVATE ${OpenCV_INCLUDE_DIRECTORIES})
+	target_link_libraries(${target} PRIVATE ${OpenCV_LIBS})
 endforeach()
 
-target_include_directories(t03 PRIVATE ${OpenCV_INCLUDE_DIRECTORIES})
-target_link_libraries(t03 PRIVATE ${OpenCV_LIBS})
-target_compile_definitions(t03 PRIVATE USE_OPENCV)

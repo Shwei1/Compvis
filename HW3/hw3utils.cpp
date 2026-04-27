@@ -1,9 +1,9 @@
+#include "hw3utils.hpp"
 #include <ranges>
 #include <print>
 #include <algorithm>
 #include <random>
 #include <cassert>
-#include "hw3utils.hpp"
 
 	
 namespace {
@@ -15,179 +15,39 @@ namespace {
 		}
 	};
 
+
+	enum class LargestInlierCount {
+		Linear,
+		Quadratic,
+		Exponential
+	};
+
+
+	LargestInlierCount findLargestInlierCount(auto linCount, auto quadCount, auto expCount) {
+		if (linCount >= quadCount && linCount >= expCount) {
+			return LargestInlierCount::Linear;
+		} else if (quadCount >= linCount && quadCount >= expCount) {
+			return LargestInlierCount::Quadratic;
+		} else {
+			return LargestInlierCount::Exponential;
+		}
+		return LargestInlierCount::Exponential;
+	}
+
+
 	constexpr inline double linearError(double x, double y, double k, double b) {
 		return std::abs(y-k*x-b);
 	}
 
-	inline std::size_t calculateNRANSAC(double w, double p=.99, double n=6.);
-}
 
-
-std::pair<double, double> hw3::minimizeLinear(const std::vector<double>& X, const std::vector<double>& Y) {
-	const auto n{X.size()};
-
-	const double sumXY{std::ranges::fold_left(
-			std::views::zip(X, Y), 0.,
-			[](double curr, const auto&& pair) {
-				auto&& [x, y]{pair};
-				return curr + x*y;
-			})};
-	const double sumX{std::ranges::fold_left(X, 0., std::plus{})};
-	const double sumY{std::ranges::fold_left(Y, 0., std::plus{})};
-	const double sumX2{std::ranges::fold_left(X | std::views::transform(square{}), 0.0,
-			std::plus{})};
-
-	const double k{(n * sumXY - sumX * sumY)/(n*sumX2-sumX*sumX)};
-	const double b{(sumY-k*sumX)/n};
-
-	// std::println("sumXY={}", sumXY);
-	// std::println("sumX={}", sumX);
-	// std::println("sumY={}", sumY);
-	// std::println("sumX2={}", sumX2);
-
-	return {k, b};
-}
-
-#ifdef USE_OPENCV
-std::tuple<double, double, double> minimizeQuadratic(const std::vector<double>& X, const std::vector<double>& Y) {
-	const auto n{X.size()};
-	cv::Mat A(n, 3, CV_64F);
-	cv::Mat y(n, 1, CV_64F);
-	for (auto i{0uz}; i < n; i++) {
-		auto* rowI{A.ptr<double>(i)};
-		auto* entryY{y.ptr<double>(i)};
-
-		rowI[0] = X[i] * X[i];
-		rowI[1] = X[i];
-		rowI[2] = 1.;
-
-		entryY[0] = Y[i];
-	}
-	cv::Mat b{};
-	cv::solve(A, y, b, cv::DECOMP_SVD);
-
-	return {b.at<double>(0), b.at<double>(1), b.at<double>(2)};
-}
-#endif
-
-
-std::pair<double, double> hw3::minimizeExponential(const std::vector<double>& X, const std::vector<double>& Y) {
-	std::vector<double> lnY{Y | std::views::transform([](double v){return std::log(v);}) 
-							  | std::ranges::to<decltype(lnY)>()};
-	auto&& [lnA, b]{minimizeLinear(X, Y)};
-	return {std::exp(lnA), b};
-}
-
-
-hw3::FitResult estimateBestModelRANSAC(const std::vector<std::pair<double, double>>& points) {
-	static std::random_device rd{};
-	static std::mt19937 gen{rd()};
-
-	const auto pointCount{points.size()};
-
-	double w{0.5};
-	auto N{calculateNRANSAC(w)};
-
-	hw3::FitResult bestModel{std::monostate{}};
-	double bestRatio{};
-
-	auto i{0uz};
-	while (i < N) {
-		std::vector<std::pair<double, double>> sample{};
-
-		decltype(i) inlierCount{};
-
-		std::sample(points.begin(),
-					points.end(),
-					std::back_inserter(sample),
-					3, gen);
-
-
+	constexpr inline double quadraticError(double x, double y, double a, double b, double c) {
+		return std::abs(y-a*x*x-b*x-c);
 	}
 
 
-
-}
-
-
-std::pair<double, double> hw3::linearEstimateRANSAC(const std::vector<std::pair<double, double>>& points,
-		double tau, double p, std::size_t k) {
-	static std::random_device rd{};
-	static std::mt19937 gen{rd()};
-
-	const auto pointCount{points.size()};
-
-	constexpr double w{0.5};
-						
-	const auto N{static_cast<std::size_t>(std::log(1-p)/std::log(1-w*w))};
-
-	double bestK{}, bestB{};
-	double bestRatio{};
-
-	for (auto i{0uz}; i < N; i++) { // N -> 5
-		std::vector<std::pair<double, double>> sample{};
-
-		decltype(i) inlierPointCount{};
-
-		std::sample(std::ranges::begin(points),
-					std::ranges::end(points),
-					std::back_inserter(sample),
-					k, gen);
-
-		std::vector<double> X{sample | std::views::elements<0> | std::ranges::to<decltype(X)>()};
-		std::vector<double> Y{sample | std::views::elements<1> | std::ranges::to<decltype(Y)>()};
-
-		// std::println("X = {}", X);
-		// std::println("Y = {}", Y);
-
-		auto&& [currK, currB]{minimizeLinear(X, Y)};
-
-		// std::println("{}, {}", currK, currB);
-
-		for (const auto& [x, y]: points) {
-			if (linearError(x, y, currK, currB) < tau) {
-				inlierPointCount++;
-			}
-		}
-		
-		const double currRatio{static_cast<double>(inlierPointCount) / pointCount};
-		if (currRatio > bestRatio) {
-			bestRatio = currRatio;
-			bestK = currK;
-			bestB = currB;
-		}
+	constexpr inline double exponentialError(double x, double y, double a, double b) {
+		return std::abs(y-a*std::exp(b*x));
 	}
-
-	std::vector<double> inlierX{}, inlierY{};
-
-	for (const auto& [x, y] : points) {
-		if (linearError(x, y, bestK, bestB) < tau) {
-			inlierX.push_back(x);
-			inlierY.push_back(y);
-		}
-	}
-	auto&& [refinedK, refinedB]{minimizeLinear(inlierX, inlierY)};
-	return {refinedK, refinedB};
-}
-
-#ifdef USE_OPENCV
-std::vector<cv::Point2d> hw3::projectPoints(const std::vector<cv::Point3d>& points3D, const cv::Matx34d& projectionMat) {
-
-	std::vector<cv::Point2d> res{};
-
-	for (const auto& p3d : points3D) {
-		cv::Vec4d X{p3d.x, p3d.y, p3d.z, 1.0};
-
-		cv::Vec3d x1{projectionMat * X};
-		res.emplace_back(x1(0)/x1(2), x1(1)/x1(2));
-	}
-
-	return res;
-}
-#endif
-
-namespace {
-#ifdef USE_OPENCV
 
 
 	cv::Point2d projectPoint(const cv::Point3d& pt, const cv::Matx34d& P) {
@@ -267,22 +127,267 @@ namespace {
 		return {RProj, t};
 	}
 
-#endif
 
-
-	inline std::size_t calculateNRANSAC(double w, double p, double n) {
+	inline std::size_t calculateNRANSAC(double w, double p=0.99, double n=6.) {
 		w = std::clamp(w, 1e-9, 1.-1e-9);
 		return static_cast<std::size_t>(std::log(1-p)/std::log(1-std::pow(w, n)));
 	}
 	
 }
 
-#ifdef USE_OPENCV
+
+std::pair<double, double> hw3::minimizeLinear(const std::vector<double>& X, const std::vector<double>& Y) {
+	const auto n{X.size()};
+
+	const double sumXY{std::ranges::fold_left(
+			std::views::zip(X, Y), 0.,
+			[](double curr, auto&& pair) {
+				auto&& [x, y]{pair};
+				return curr + x*y;
+			})};
+	const double sumX{std::ranges::fold_left(X, 0., std::plus{})};
+	const double sumY{std::ranges::fold_left(Y, 0., std::plus{})};
+	const double sumX2{std::ranges::fold_left(X | std::views::transform(square{}), 0.0,
+			std::plus{})};
+
+	const double k{(n * sumXY - sumX * sumY)/(n*sumX2-sumX*sumX)};
+	const double b{(sumY-k*sumX)/n};
+
+	// std::println("sumXY={}", sumXY);
+	// std::println("sumX={}", sumX);
+	// std::println("sumY={}", sumY);
+	// std::println("sumX2={}", sumX2);
+
+	return {k, b};
+}
+
+std::tuple<double, double, double> hw3::minimizeQuadratic(const std::vector<double>& X, const std::vector<double>& Y) {
+	const auto n{X.size()};
+	cv::Mat A(n, 3, CV_64F);
+	cv::Mat y(n, 1, CV_64F);
+	for (auto i{0uz}; i < n; i++) {
+		auto* rowI{A.ptr<double>(i)};
+		auto* entryY{y.ptr<double>(i)};
+
+		rowI[0] = X[i] * X[i];
+		rowI[1] = X[i];
+		rowI[2] = 1.;
+
+		entryY[0] = Y[i];
+	}
+	cv::Mat b{};
+	cv::solve(A, y, b, cv::DECOMP_SVD);
+
+	return {b.at<double>(0), b.at<double>(1), b.at<double>(2)};
+}
+
+
+std::pair<double, double> hw3::minimizeExponential(const std::vector<double>& X, const std::vector<double>& Y) {
+	std::vector<double> Xf{}, lnYf{};
+	for (std::size_t i = 0; i < Y.size(); ++i) {
+        if (Y[i] > 0.0) {
+            Xf.push_back(X[i]);
+            lnYf.push_back(std::log(Y[i]));
+        }
+    }
+    auto&& [lnA, b]{minimizeLinear(Xf, lnYf)};
+	return {std::exp(lnA), b};
+}
+
+
+hw3::FitResult hw3::estimateBestModelRANSAC(const std::vector<std::pair<double, double>>& points, double tau) {
+	auto& gen{hw3::getRNG()};
+
+	const auto pointCount{points.size()};
+
+	double w{0.5};
+	auto N{calculateNRANSAC(w)};
+
+	hw3::FitResult bestModel{std::monostate{}};
+	double bestRatio{};
+
+	auto i{0uz};
+	while (i < N) {
+		// std::println("Iteration {}", i);
+		std::vector<std::pair<double, double>> sample{};
+
+		decltype(i) inlierCountLin{0uz}, inlierCountQuad{0uz}, inlierCountExp{0uz};
+
+		std::sample(points.begin(),
+					points.end(),
+					std::back_inserter(sample),
+					3, gen);
+
+		std::vector<double> X{sample | std::views::elements<0> | std::ranges::to<decltype(X)>()};
+		std::vector<double> Y{sample | std::views::elements<1> | std::ranges::to<decltype(Y)>()};
+		
+		auto&& [aLin, bLin]{hw3::minimizeLinear(X, Y)};
+		auto&& [aQuad, bQuad, cQuad]{hw3::minimizeQuadratic(X, Y)};
+		auto&& [aExp, bExp]{hw3::minimizeExponential(X, Y)};
+
+		for (auto&& [x, y] : points) {
+			if (linearError(x, y, aLin, bLin) < tau) {
+				inlierCountLin++;
+			}
+			if (quadraticError(x, y, aQuad, bQuad, cQuad) < tau) {
+				inlierCountQuad++;
+			}
+			if (exponentialError(x, y, aExp, bExp) < tau) {
+				inlierCountExp++;
+			}
+		}
+
+		switch (findLargestInlierCount(inlierCountLin, inlierCountQuad, inlierCountExp)) {
+			case LargestInlierCount::Linear: {
+				auto currRatio{static_cast<double>(inlierCountLin)/pointCount};
+				if (currRatio > bestRatio) {
+					bestModel = hw3::LinearCoefficients{aLin, bLin};
+					bestRatio = currRatio;
+				}
+				break;
+			}
+			case LargestInlierCount::Quadratic: {
+				auto currRatio{static_cast<double>(inlierCountQuad)/pointCount};
+				if (currRatio > bestRatio) {
+					bestModel = hw3::QuadraticCoefficients{aQuad, bQuad, cQuad};
+					bestRatio = currRatio;
+				}
+				break;
+			}
+			case LargestInlierCount::Exponential: {
+				auto currRatio{static_cast<double>(inlierCountExp)/pointCount};
+				if (currRatio > bestRatio) {
+					bestModel = hw3::ExponentialCoefficients{aExp, bExp};
+					bestRatio = currRatio;
+				}
+				break;
+			}
+			default:
+				break;
+		}
+
+			w = bestRatio;	
+			i++;
+	}
+
+	std::vector<double> inliersX{}, inliersY{};
+
+	std::visit([&](auto&& arg) -> void {
+			using T = std::decay_t<decltype(arg)>;
+			if constexpr (std::is_same_v<T, hw3::LinearCoefficients>) {
+				for (auto&& [x, y] : points) {
+					if (linearError(x, y, arg.a, arg.b) < tau) {
+						inliersX.push_back(x);
+						inliersY.push_back(y);
+					}
+				}
+				auto&& [refinedA, refinedB]{hw3::minimizeLinear(inliersX, inliersY)};
+				bestModel = hw3::LinearCoefficients{refinedA, refinedB};
+			} else if constexpr (std::is_same_v<T, hw3::QuadraticCoefficients>) {
+				for (auto&& [x, y] : points) {
+					if (quadraticError(x, y, arg.a, arg.b, arg.c) < tau) {
+						inliersX.push_back(x);
+						inliersY.push_back(y);
+					}
+				}
+				auto&& [refinedA, refinedB, refinedC]{hw3::minimizeQuadratic(inliersX, inliersY)};
+				bestModel = hw3::QuadraticCoefficients{refinedA, refinedB, refinedC};
+			} else if constexpr (std::is_same_v<T, hw3::ExponentialCoefficients>) {
+				for (auto&& [x, y] : points) {
+					if (exponentialError(x, y, arg.a, arg.b) < tau) {
+						inliersX.push_back(x);
+						inliersY.push_back(y);
+					}
+				}
+				auto&& [refinedA, refinedB]{hw3::minimizeExponential(inliersX, inliersY)};
+				bestModel = hw3::ExponentialCoefficients{refinedA, refinedB};
+				
+			} else if constexpr (std::is_same_v<T, std::monostate>); // Do nothing
+			else {
+				static_assert(false, "Non-extensive visitor");
+			}
+			}, bestModel);
+	std::println("Returning with inlier ratio {}", bestRatio);
+	return bestModel;
+}
+
+
+std::pair<double, double> hw3::linearEstimateRANSAC(const std::vector<std::pair<double, double>>& points,
+		double tau, double p, std::size_t k) {
+	auto& gen{hw3::getRNG()};
+
+	const auto pointCount{points.size()};
+
+	constexpr double w{0.5};
+						
+	const auto N{static_cast<std::size_t>(std::log(1-p)/std::log(1-w*w))};
+
+	double bestK{}, bestB{};
+	double bestRatio{};
+
+	for (auto i{0uz}; i < N; i++) { // N -> 5
+		std::vector<std::pair<double, double>> sample{};
+
+		decltype(i) inlierPointCount{};
+
+		std::sample(std::ranges::begin(points),
+					std::ranges::end(points),
+					std::back_inserter(sample),
+					k, gen);
+
+		std::vector<double> X{sample | std::views::elements<0> | std::ranges::to<decltype(X)>()};
+		std::vector<double> Y{sample | std::views::elements<1> | std::ranges::to<decltype(Y)>()};
+
+		// std::println("X = {}", X);
+		// std::println("Y = {}", Y);
+
+		auto&& [currK, currB]{minimizeLinear(X, Y)};
+
+		// std::println("{}, {}", currK, currB);
+
+		for (const auto& [x, y]: points) {
+			if (linearError(x, y, currK, currB) < tau) {
+				inlierPointCount++;
+			}
+		}
+		
+		const double currRatio{static_cast<double>(inlierPointCount) / pointCount};
+		if (currRatio > bestRatio) {
+			bestRatio = currRatio;
+			bestK = currK;
+			bestB = currB;
+		}
+	}
+
+	std::vector<double> inlierX{}, inlierY{};
+
+	for (const auto& [x, y] : points) {
+		if (linearError(x, y, bestK, bestB) < tau) {
+			inlierX.push_back(x);
+			inlierY.push_back(y);
+		}
+	}
+	auto&& [refinedK, refinedB]{minimizeLinear(inlierX, inlierY)};
+	return {refinedK, refinedB};
+}
+
+std::vector<cv::Point2d> hw3::projectPoints(const std::vector<cv::Point3d>& points3D, const cv::Matx34d& projectionMat) {
+
+	std::vector<cv::Point2d> res{};
+
+	for (const auto& p3d : points3D) {
+		cv::Vec4d X{p3d.x, p3d.y, p3d.z, 1.0};
+
+		cv::Vec3d x1{projectionMat * X};
+		res.emplace_back(x1(0)/x1(2), x1(1)/x1(2));
+	}
+
+	return res;
+}
+
 
 std::pair<cv::Matx33d, cv::Vec3d> hw3::estimateTransformRANSAC(const std::vector<hw3::Correspondence>& correspondences, const cv::Matx33d& K, double tau, double p) {
-
-	static std::random_device rd{};
-	static std::mt19937 gen{rd()};
+	auto& gen{hw3::getRNG()};
 
 	const auto pointCount{correspondences.size()};
 
@@ -349,7 +454,31 @@ void hw3::testReprojection(const cv::Point3d& pt3d, const cv::Point2d& pt2d, con
 	std::println("Error = {}", err);
 }
 
-#endif
+std::mt19937& hw3::getRNG() {
+	static std::random_device dev{};
+	static std::mt19937 rng{dev()};
+	return rng;
+}
+
+
+std::string hw3::toString(const hw3::FitResult& v){
+	return std::visit([](auto&& arg) -> std::string {
+			using T = std::decay_t<decltype(arg)>;
+			if constexpr (std::is_same_v<T, hw3::LinearCoefficients>) {
+				return std::format("LinearModel({}, {})", arg.a, arg.b);
+			} else if constexpr (std::is_same_v<T, hw3::QuadraticCoefficients>) {
+				return std::format("QuadraticModel({}, {}, {})", arg.a, arg.b, arg.c);
+			} else if constexpr (std::is_same_v<T, hw3::ExponentialCoefficients>) {
+				return std::format("ExponentialModel({}, {})", arg.a, arg.b);
+			}
+			else if constexpr (std::is_same_v<T, std::monostate>) {
+				return std::format("NoModel(-)");
+			}
+			else {
+				static_assert(false, "Non-extensive visitor");
+			}
+			}, v);
+}
 
 
 
