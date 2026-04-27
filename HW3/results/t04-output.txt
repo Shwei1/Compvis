@@ -1,0 +1,6 @@
+Returning with inlier ratio 0.78
+LinearModel(5.850817421534661, 0.24944180137830183)
+Returning with inlier ratio 0.62
+QuadraticModel(3.0022319224981153, 0.26836451966831054, 0.3321294536092643)
+Returning with inlier ratio 0.36
+ExponentialModel(4.533498539083728, 1.568572408104977)

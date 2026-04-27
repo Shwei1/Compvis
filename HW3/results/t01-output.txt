@@ -1,0 +1,4 @@
+True parameters:
+k = 5.8, b = 0.44
+Guessed parameters: 
+k^ = 5.827781739478016, b^ = 0.32235105008926274

@@ -1,0 +1,56 @@
+iter      cost      cost_change  |gradient|   |step|    tr_ratio  tr_radius  ls_iter  iter_time  total_time
+   0  1.524168e+02    0.00e+00    8.62e+00   0.00e+00   0.00e+00  1.00e+04        0    2.00e-04    3.38e-04
+   1  6.019519e+01    9.22e+01    5.92e+01   0.00e+00   4.85e+00  3.00e+04        1    2.29e-04    6.36e-04
+   2  4.862556e+01    1.16e+01    5.27e+01   2.06e-01   1.96e+00  9.00e+04        1    2.15e-04    8.66e-04
+   3  4.500503e+01    3.62e+00    2.77e+01   1.28e-01   1.65e+00  2.70e+05        1    1.79e-04    1.06e-03
+   4  4.433648e+01    6.69e-01    1.00e+01   7.65e-02   1.41e+00  8.10e+05        1    1.79e-04    1.25e-03
+   5  4.422999e+01    1.06e-01    3.85e+00   4.37e-02   1.44e+00  2.43e+06        1    1.68e-04    1.42e-03
+   6  4.420889e+01    2.11e-02    1.59e+00   2.34e-02   1.46e+00  7.29e+06        1    1.47e-04    1.58e-03
+   7  4.420427e+01    4.62e-03    6.85e-01   1.21e-02   1.48e+00  2.19e+07        1    1.48e-04    1.73e-03
+   8  4.420322e+01    1.05e-03    3.07e-01   6.08e-03   1.48e+00  6.56e+07        1    1.47e-04    1.89e-03
+   9  4.420298e+01    2.45e-04    1.41e-01   3.02e-03   1.48e+00  1.97e+08        1    1.48e-04    2.04e-03
+  10  4.420292e+01    5.71e-05    6.59e-02   1.49e-03   1.48e+00  5.90e+08        1    1.46e-04    2.20e-03
+
+Solver Summary (v 2.2.0-eigen-(3.5.0)-lapack-suitesparse-(7.12.1)-metis-(5.1.0)-acceleratesparse-eigensparse)
+
+                                     Original                  Reduced
+Parameter blocks                            1                        1
+Parameters                                  2                        2
+Residual blocks                            50                       50
+Residuals                                  50                       50
+
+Minimizer                        TRUST_REGION
+Trust region strategy     LEVENBERG_MARQUARDT
+Sparse linear algebra library    SUITE_SPARSE 
+
+                                        Given                     Used
+Linear solver          SPARSE_NORMAL_CHOLESKY   SPARSE_NORMAL_CHOLESKY
+Threads                                     1                        1
+Linear solver ordering              AUTOMATIC                        1
+
+Cost:
+Initial                          1.524168e+02
+Final                            4.420292e+01
+Change                           1.082139e+02
+
+Minimizer iterations                       11
+Successful steps                           11
+Unsuccessful steps                          0
+
+Time (in seconds):
+Preprocessor                         0.000138
+
+  Residual only evaluation           0.000056 (11)
+  Jacobian & residual evaluation     0.001710 (11)
+  Linear solver                      0.000083 (11)
+Minimizer                            0.002080
+
+Postprocessor                        0.000002
+Total                                0.002220
+
+Termination:                      CONVERGENCE (Function tolerance reached. |cost_change|/cost: 3.029811e-07 <= 1.000000e-06)
+
+True parameters:
+k = 5.8, b = 0.44
+Estimated parameters:
+k = 5.790378310868886, b = 0.6100168150429798
