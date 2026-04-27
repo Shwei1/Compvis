@@ -1,0 +1,37 @@
+Rotation matrix:
+[0.9357548032779219, -0.3029327134026339, -0.180540076694388;
+ 0.2831649605650705, 0.9505806179060921, -0.1273345749176329;
+ 0.2101917059507341, 0.06803131640494609, 0.9752903089530471]
+Rotation vector
+[0.1000000000000042;
+ -0.19999999999999;
+ 0.2999999999999959]
+Translation direction:
+[0.2918069599925078;
+ 0.5305581090772873;
+ 0.7958371636159398]
+1
+Point 0
+Ground truth: [0, 0, 5]
+Retrieved: [-3.4954e-16, 2.24e-16, 5]
+Point 1
+Ground truth: [1, 0.5, 6]
+Retrieved: [1, 0.5, 6]
+Point 2
+Ground truth: [-1, 1, 7]
+Retrieved: [-1, 1, 7]
+Point 3
+Ground truth: [2, -1, 5.5]
+Retrieved: [2, -1, 5.5]
+Point 4
+Ground truth: [-2, -0.5, 6.5]
+Retrieved: [-2, -0.5, 6.5]
+Point 5
+Ground truth: [0.5, 2, 8]
+Retrieved: [0.5, 2, 8]
+Point 6
+Ground truth: [-1.5, -2, 7.5]
+Retrieved: [-1.5, -2, 7.5]
+Point 7
+Ground truth: [1.5, 1.5, 9]
+Retrieved: [1.5, 1.5, 9]

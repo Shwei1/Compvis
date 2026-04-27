@@ -1,0 +1,100 @@
+iter      cost      cost_change  |gradient|   |step|    tr_ratio  tr_radius  ls_iter  iter_time  total_time
+   0  7.174252e+06    0.00e+00    1.70e+06   0.00e+00   0.00e+00  1.00e+04        0    2.10e-05    9.68e-05
+   1  7.476886e+11   -7.48e+11    1.70e+06   0.00e+00  -1.06e+05  5.00e+03        1    3.48e-05    1.99e-04
+   2  4.141337e+08   -4.07e+08    1.70e+06   0.00e+00  -5.75e+01  1.25e+03        1    5.96e-06    2.12e-04
+   3  1.690659e+11   -1.69e+11    1.70e+06   0.00e+00  -2.39e+04  1.56e+02        1    5.01e-06    2.21e-04
+   4  4.189936e+07   -3.47e+07    1.70e+06   0.00e+00  -4.98e+00  9.77e+00        1    4.05e-06    2.29e-04
+   5  4.670675e+08   -4.60e+08    1.70e+06   0.00e+00  -7.38e+01  3.05e-01        1    5.01e-06    2.38e-04
+   6  2.777196e+06    4.40e+06    1.65e+06   0.00e+00   1.44e+00  9.16e-01        1    1.10e-05    2.53e-04
+   7  1.213332e+06    1.56e+06    1.07e+06   3.22e+00   1.15e+00  2.75e+00        1    1.10e-05    2.67e-04
+   8  7.884186e+05    4.25e+05    6.49e+05   2.36e+00   1.06e+00  8.24e+00        1    1.00e-05    2.81e-04
+   9  5.461965e+05    2.42e+05    4.34e+05   1.38e+00   1.06e+00  2.47e+01        1    1.10e-05    2.96e-04
+  10  2.734161e+05    2.73e+05    3.43e+05   2.44e+00   1.08e+00  7.42e+01        1    1.00e-05    3.10e-04
+  11  5.835941e+04    2.15e+05    1.04e+05   4.13e+00   1.06e+00  2.22e+02        1    1.00e-05    3.24e-04
+  12  6.202368e+03    5.22e+04    2.14e+05   2.24e+00   9.84e-01  6.67e+02        1    1.00e-05    3.38e-04
+  13  2.495407e+02    5.95e+03    5.39e+04   6.04e-01   9.75e-01  2.00e+03        1    1.10e-05    3.52e-04
+  14  3.131153e-01    2.49e+02    7.81e+02   9.63e-02   1.00e+00  6.01e+03        1    1.00e-05    3.65e-04
+  15  1.124215e-04    3.13e-01    5.05e+00   4.18e-03   1.00e+00  1.80e+04        1    1.00e-05    3.79e-04
+  16  5.492557e-09    1.12e-04    3.90e-02   7.07e-05   1.00e+00  5.41e+04        1    1.00e-05    3.93e-04
+  17  3.029337e-14    5.49e-09    9.25e-05   4.68e-07   1.00e+00  1.62e+05        1    1.00e-05    4.09e-04
+
+Solver Summary (v 2.2.0-eigen-(3.5.0)-lapack-suitesparse-(7.12.1)-metis-(5.1.0)-acceleratesparse-eigensparse)
+
+                                     Original                  Reduced
+Parameter blocks                           12                       10
+Parameters                                 36                       30
+Residual blocks                            32                       32
+Residuals                                  64                       64
+
+Minimizer                        TRUST_REGION
+
+Dense linear algebra library            EIGEN 
+Trust region strategy     LEVENBERG_MARQUARDT
+                                        Given                     Used
+Linear solver                     DENSE_SCHUR              DENSE_SCHUR
+Threads                                     1                        1
+Linear solver ordering              AUTOMATIC                      8,2
+Schur structure                         2,3,3                    2,3,3
+
+Cost:
+Initial                          7.174252e+06
+Final                            3.029337e-14
+Change                           7.174252e+06
+
+Minimizer iterations                       18
+Successful steps                           13
+Unsuccessful steps                          5
+
+Time (in seconds):
+Preprocessor                         0.000076
+
+  Residual only evaluation           0.000022 (18)
+  Jacobian & residual evaluation     0.000076 (13)
+  Linear solver                      0.000071 (18)
+Minimizer                            0.000344
+
+Postprocessor                        0.000004
+Total                                0.000424
+
+Termination:                      CONVERGENCE (Parameter tolerance reached. Relative step_norm: 5.211396e-11 <= 1.000000e-08.)
+
+Ground truth rotation:
+[0.17765, 0.206117, 0.700652]
+Guessed:
+0.17764992937204874 0.20611658292069013 0.7006516945270388 
+Ground truth translation:
+[-0.932945, -3.28074, -2.66765]
+Guessed:
+-0.9329454082281948 -3.2807411639585378 -2.6676488297055205 
+Point 0 true: 
+[0, 0, 5]
+Point 0 guessed: 
+[-6.686558773341448e-11, -7.992208821018947e-11, 5.000000000022149]
+Point 1 true: 
+[1, 0.5, 6]
+Point 1 guessed: 
+[0.9999999998694434, 0.4999999998128434, 6.000000000103528]
+Point 2 true: 
+[-1, 1, 7]
+Point 2 guessed: 
+[-1.0000000000001137, 0.9999999999564781, 7.0000000000318865]
+Point 3 true: 
+[2, -1, 5.5]
+Point 3 guessed: 
+[1.999999999700595, -1.000000000840775, 5.50000000026498]
+Point 4 true: 
+[-2, -0.5, 6.5]
+Point 4 guessed: 
+[-1.9999999999320728, -0.49999999994820543, 6.499999999978583]
+Point 5 true: 
+[0.5, 2, 8]
+Point 5 guessed: 
+[0.4999999999797347, 1.9999999998908125, 8.000000000106663]
+Point 6 true: 
+[-1.5, -2, 7.5]
+Point 6 guessed: 
+[-1.5000000000398055, -2.000000000001384, 7.500000000004454]
+Point 7 true: 
+[1.5, 1.5, 9]
+Point 7 guessed: 
+[1.4999999999487357, 1.4999999998146334, 9.000000000245654]
