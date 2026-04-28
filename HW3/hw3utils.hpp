@@ -33,12 +33,12 @@ namespace hw3 {
 
 
 /* For task 1 and 4 */
-	std::pair<double, double> minimizeLinear(const std::vector<double>& X, const std::vector<double>& Y);
+	LinearCoefficients minimizeLinear(const std::vector<double>& X, const std::vector<double>& Y);
 
-	std::tuple<double, double, double> minimizeQuadratic(const std::vector<double>& X, const std::vector<double>& Y);
+	QuadraticCoefficients minimizeQuadratic(const std::vector<double>& X, const std::vector<double>& Y);
 
 
-	std::pair<double, double> minimizeExponential(const std::vector<double>& X, const std::vector<double>& Y);
+	ExponentialCoefficients minimizeExponential(const std::vector<double>& X, const std::vector<double>& Y);
 
 
 	FitResult estimateBestModelRANSAC(const std::vector<std::pair<double, double>>& points, double tau);

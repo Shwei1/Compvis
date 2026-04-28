@@ -5,6 +5,7 @@
 #include <random>
 #include <cassert>
 
+bool logWarnings{false};
 	
 namespace {
 
@@ -136,8 +137,14 @@ namespace {
 }
 
 
-std::pair<double, double> hw3::minimizeLinear(const std::vector<double>& X, const std::vector<double>& Y) {
+hw3::LinearCoefficients hw3::minimizeLinear(const std::vector<double>& X, const std::vector<double>& Y) {
 	const auto n{X.size()};
+	if (n < 2) {
+		if (logWarnings) {
+			std::println(stderr, "[WARNING]: minimizeLinear: Too few points given: {}", n);
+		}
+		return {0., 0.};
+	}
 
 	const double sumXY{std::ranges::fold_left(
 			std::views::zip(X, Y), 0.,
@@ -161,8 +168,16 @@ std::pair<double, double> hw3::minimizeLinear(const std::vector<double>& X, cons
 	return {k, b};
 }
 
-std::tuple<double, double, double> hw3::minimizeQuadratic(const std::vector<double>& X, const std::vector<double>& Y) {
+hw3::QuadraticCoefficients hw3::minimizeQuadratic(const std::vector<double>& X, const std::vector<double>& Y) {
 	const auto n{X.size()};
+
+	if (n < 3) {
+		if (logWarnings) {
+			std::println(stderr, "[WARNING]: minimizeQuadratic: Too few points given: {}", n);
+		}
+		return {0., 0., 0.};
+	}
+
 	cv::Mat A(n, 3, CV_64F);
 	cv::Mat y(n, 1, CV_64F);
 	for (auto i{0uz}; i < n; i++) {
@@ -182,7 +197,7 @@ std::tuple<double, double, double> hw3::minimizeQuadratic(const std::vector<doub
 }
 
 
-std::pair<double, double> hw3::minimizeExponential(const std::vector<double>& X, const std::vector<double>& Y) {
+hw3::ExponentialCoefficients hw3::minimizeExponential(const std::vector<double>& X, const std::vector<double>& Y) {
 	std::vector<double> Xf{}, lnYf{};
 	for (std::size_t i = 0; i < Y.size(); ++i) {
         if (Y[i] > 0.0) {
@@ -198,12 +213,14 @@ std::pair<double, double> hw3::minimizeExponential(const std::vector<double>& X,
 hw3::FitResult hw3::estimateBestModelRANSAC(const std::vector<std::pair<double, double>>& points, double tau) {
 	auto& gen{hw3::getRNG()};
 
+	using NoModel = std::monostate;
+
 	const auto pointCount{points.size()};
 
 	double w{0.5};
 	auto N{calculateNRANSAC(w)};
 
-	hw3::FitResult bestModel{std::monostate{}};
+	hw3::FitResult bestModel{NoModel{}};
 	double bestRatio{};
 
 	auto i{0uz};
@@ -265,7 +282,6 @@ hw3::FitResult hw3::estimateBestModelRANSAC(const std::vector<std::pair<double, 
 			default:
 				break;
 		}
-
 			w = bestRatio;	
 			i++;
 	}
@@ -308,6 +324,9 @@ hw3::FitResult hw3::estimateBestModelRANSAC(const std::vector<std::pair<double, 
 			}
 			}, bestModel);
 	std::println("Returning with inlier ratio {}", bestRatio);
+	if (bestRatio < 0.3) {
+		bestModel = NoModel{};
+	}
 	return bestModel;
 }
 
@@ -320,7 +339,7 @@ std::pair<double, double> hw3::linearEstimateRANSAC(const std::vector<std::pair<
 
 	constexpr double w{0.5};
 						
-	const auto N{static_cast<std::size_t>(std::log(1-p)/std::log(1-w*w))};
+	const auto N{calculateNRANSAC(w, k, p)};
 
 	double bestK{}, bestB{};
 	double bestRatio{};
@@ -392,7 +411,7 @@ std::pair<cv::Matx33d, cv::Vec3d> hw3::estimateTransformRANSAC(const std::vector
 	const auto pointCount{correspondences.size()};
 
 	double w{0.5};
-	auto N{calculateNRANSAC(w)};
+	auto N{calculateNRANSAC(w, p)};
 
 	cv::Matx33d bestR{};
 	cv::Vec3d bestT{};
@@ -465,11 +484,11 @@ std::string hw3::toString(const hw3::FitResult& v){
 	return std::visit([](auto&& arg) -> std::string {
 			using T = std::decay_t<decltype(arg)>;
 			if constexpr (std::is_same_v<T, hw3::LinearCoefficients>) {
-				return std::format("LinearModel({}, {})", arg.a, arg.b);
+				return std::format("y={}x+{}", arg.a, arg.b);
 			} else if constexpr (std::is_same_v<T, hw3::QuadraticCoefficients>) {
-				return std::format("QuadraticModel({}, {}, {})", arg.a, arg.b, arg.c);
+				return std::format("y={}x^2+{}x+{}", arg.a, arg.b, arg.c);
 			} else if constexpr (std::is_same_v<T, hw3::ExponentialCoefficients>) {
-				return std::format("ExponentialModel({}, {})", arg.a, arg.b);
+				return std::format("{}*e^({}x)", arg.a, arg.b);
 			}
 			else if constexpr (std::is_same_v<T, std::monostate>) {
 				return std::format("NoModel(-)");
